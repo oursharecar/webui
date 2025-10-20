@@ -1,0 +1,30 @@
+FROM node:22 AS build
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+
+ARG VITE_BACKEND_ENDPOINT=http://localhost:3000
+ARG VITE_AUTH0_DOMAIN=oursharecar-dev.jp.auth0.com
+ARG VITE_AUTH0_CLIENT_ID=0s9czDDre6SMV1pIgUWABd0Mu08ECKgR
+ARG VITE_AUTH0_AUDIENCE=https://backend.odometer.westelh.dev
+ARG VITE_AUTH0_REDIRECT_URI
+
+ENV VITE_BACKEND_ENDPOINT=${VITE_BACKEND_ENDPOINT}
+ENV VITE_AUTH0_DOMAIN=${VITE_AUTH0_DOMAIN}
+ENV VITE_AUTH0_CLIENT_ID=${VITE_AUTH0_CLIENT_ID}
+ENV VITE_AUTH0_AUDIENCE=${VITE_AUTH0_AUDIENCE}
+ENV VITE_AUTH0_REDIRECT_URI=${VITE_AUTH0_REDIRECT_URI}
+
+RUN npm run build
+
+FROM nginx:1.27-alpine
+
+COPY --from=build /app/dist /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
